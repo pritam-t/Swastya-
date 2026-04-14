@@ -1,87 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { dbService } from '../services/dbService';
 import { gradeMenu } from '../services/gradingEngine';
 import { getMockMenuData } from '../services/ocrService';
-
-const GRADE_CONFIG = {
-  optimal:  { bg: '#E8F1EF', border: 'var(--secondary)', label: 'Optimal', icon: 'favorite', iconColor: 'var(--secondary)', chipBg: 'var(--secondary-fixed)', chipText: 'var(--on-secondary-fixed)', badge: 'Heart-Healthy Selection' },
-  modified: { bg: '#F9F4E8', border: 'var(--tertiary)', label: 'Modified', icon: 'edit_note', iconColor: 'var(--tertiary)', chipBg: 'var(--tertiary-fixed)', chipText: 'var(--on-tertiary-fixed)', badge: 'Safe with Tweak' },
-  risk:     { bg: '#FFFFFF', border: 'var(--error)', label: 'Risk', icon: 'warning', iconColor: 'var(--error)', chipBg: 'var(--error-container)', chipText: 'var(--error)', badge: 'Potential Interaction' },
-};
-
-function DishCard({ dish }) {
-  const [expanded, setExpanded] = useState(false);
-  const [logged, setLogged] = useState(false);
-  const cfg = GRADE_CONFIG[dish.grade] || GRADE_CONFIG.optimal;
-
-  const handleLog = () => {
-    dbService.addMealLog({ name: dish.name, grade: dish.grade, price: dish.price });
-    dbService.saveHealthTrend({ meals: 1, optimalCount: dish.grade === 'optimal' ? 1 : 0 });
-    setLogged(true);
-  };
-
-  return (
-    <div className="card-lift" style={{
-      background: cfg.bg, borderRadius: '1.5rem',
-      borderLeft: dish.grade === 'risk' ? `4px solid ${cfg.border}` : 'none',
-      padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.875rem',
-      cursor: 'pointer', position: 'relative', overflow: 'hidden'
-    }} onClick={() => setExpanded(e => !e)}>
-      {/* Badge */}
-      <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: cfg.chipBg, color: cfg.chipText, borderRadius: 999, padding: '0.35rem 0.75rem', fontSize: '0.625rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', alignSelf: 'flex-start' }}>
-        <span className="material-symbols-outlined" style={{ fontSize: 14, color: cfg.iconColor }}>{cfg.icon}</span>
-        {cfg.badge}
-      </div>
-
-      {/* Dish Name */}
-      <h3 className="font-editorial" style={{ fontSize: '1.375rem', color: 'var(--on-surface)', lineHeight: 1.25, fontStyle: 'italic' }}>{dish.name}</h3>
-
-      {/* Description */}
-      {dish.description && (
-        <p style={{ fontSize: '0.875rem', color: 'var(--on-surface-variant)', lineHeight: 1.55 }}>{dish.description}</p>
-      )}
-
-      {/* Expand: Reasons */}
-      {expanded && (
-        <div style={{ marginTop: 4, display: 'flex', flexDirection: 'column', gap: 6 }}>
-          {dish.reasons?.map((r, i) => (
-            <div key={i} style={{ fontSize: '0.8125rem', color: 'var(--on-surface-variant)', lineHeight: 1.5, background: 'rgba(255,255,255,0.5)', borderRadius: '0.5rem', padding: '0.5rem 0.75rem' }}>{r}</div>
-          ))}
-          {dish.instruction && (
-            <div style={{ fontSize: '0.8125rem', fontWeight: 600, color: dish.grade === 'risk' ? 'var(--error)' : 'var(--primary)', fontStyle: 'italic', padding: '0.25rem 0.25rem' }}>
-              → {dish.instruction}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Footer */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 4 }}>
-        {dish.price && <span style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--on-surface-variant)' }}>{dish.price}</span>}
-        <div style={{ display: 'flex', gap: 8, marginLeft: 'auto' }}>
-          <span style={{ fontSize: '0.75rem', color: 'var(--outline)', display: 'flex', alignItems: 'center', gap: 4 }}>
-            {expanded ? 'Less ' : 'Details '}
-            <span className="material-symbols-outlined" style={{ fontSize: 16 }}>{expanded ? 'expand_less' : 'expand_more'}</span>
-          </span>
-          {!logged ? (
-            <button onClick={(e) => { e.stopPropagation(); handleLog(); }} style={{
-              fontSize: '0.75rem', fontWeight: 600, color: '#fff', background: 'var(--primary)',
-              border: 'none', borderRadius: 999, padding: '0.35rem 0.875rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4
-            }}>
-              <span className="material-symbols-outlined" style={{ fontSize: 14 }}>add_circle</span> Log Meal
-            </button>
-          ) : (
-            <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--secondary)', display: 'flex', alignItems: 'center', gap: 4 }}>
-              <span className="material-symbols-outlined" style={{ fontSize: 14 }}>check_circle</span> Logged
-            </span>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
+import DishCard from '../components/DishCard';
 
 export default function Dashboard() {
   const { user, signOut } = useAuth();
@@ -103,8 +26,19 @@ export default function Dashboard() {
     }
   }, []);
 
-  const counts = { optimal: dishes.filter(d => d.grade === 'optimal').length, modified: dishes.filter(d => d.grade === 'modified').length, risk: dishes.filter(d => d.grade === 'risk').length };
-  const filtered = activeFilter === 'all' ? dishes : dishes.filter(d => d.grade === activeFilter);
+  // Use useMemo to avoid recalculating counts and filtered lists on every render
+  const memoizedLists = useMemo(() => {
+    return {
+      counts: {
+        optimal: dishes.filter(d => d.grade === 'optimal').length,
+        modified: dishes.filter(d => d.grade === 'modified').length,
+        risk: dishes.filter(d => d.grade === 'risk').length
+      },
+      filtered: activeFilter === 'all' ? dishes : dishes.filter(d => d.grade === activeFilter)
+    };
+  }, [dishes, activeFilter]);
+
+  const { counts, filtered } = memoizedLists;
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--background)', paddingBottom: '6rem' }}>

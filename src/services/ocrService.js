@@ -1,17 +1,4 @@
 // ============================================
-// OCR SERVICE — Menu Text Extraction via Gemini Vision
-// ============================================
-import { GEMINI_VISION_URL } from '../config/keys';
-
-/**
- * Extracts structured dish data from a Base64-encoded menu image.
- * Uses Gemini Vision to read menu text and return dishes as JSON.
- * @param {string} base64Image - Base64-encoded JPEG/PNG image data.
- * @returns {Promise<Array>} - Array of { name, description, ingredients }
- */
-export async function extractMenuFromImage(base64Image) {
-  const prompt = `You are an expert menu reader and nutritionist assistant.
-Analyze this restaurant menu image and extract all visible dishes.
 Return a JSON array (and ONLY the JSON array, no markdown wrapping) in this format:
 [
   {

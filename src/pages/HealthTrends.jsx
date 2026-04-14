@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { dbService } from '../services/dbService';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Cell } from 'recharts';
+import MetricCard from '../components/MetricCard';
 
 const DUMMY_WEEKLY = [
   { day: 'Mon', optimal: 2, modified: 1, risk: 0, score: 88 },
@@ -12,19 +13,6 @@ const DUMMY_WEEKLY = [
   { day: 'Sat', optimal: 2, modified: 2, risk: 0, score: 79 },
   { day: 'Sun', optimal: 3, modified: 1, risk: 0, score: 91 },
 ];
-
-const MetricCard = ({ icon, label, value, sub, color }) => (
-  <div style={{ background: 'var(--surface-container-lowest)', borderRadius: '1.25rem', padding: '1.25rem', flex: 1, minWidth: 120 }}>
-    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
-      <div style={{ width: 34, height: 34, borderRadius: '50%', background: color + '22', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <span className="material-symbols-outlined" style={{ fontSize: 18, color }}>{icon}</span>
-      </div>
-      <p style={{ fontSize: '0.6875rem', textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--on-surface-variant)', fontWeight: 600 }}>{label}</p>
-    </div>
-    <p className="font-editorial" style={{ fontSize: '2rem', color: 'var(--on-surface)', fontStyle: 'italic', lineHeight: 1 }}>{value}</p>
-    {sub && <p style={{ marginTop: 4, fontSize: '0.75rem', color: 'var(--outline)' }}>{sub}</p>}
-  </div>
-);
 
 export default function HealthTrends() {
   const [logs, setLogs] = useState([]);

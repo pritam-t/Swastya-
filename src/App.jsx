@@ -1,10 +1,21 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { Suspense, lazy } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
-import Login from './pages/Login';
-import Onboarding from './pages/Onboarding';
-import Scanner from './pages/Scanner';
-import Dashboard from './pages/Dashboard';
-import HealthTrends from './pages/HealthTrends';
+import ErrorBoundary from './components/ErrorBoundary';
+
+const Login = lazy(() => import('./pages/Login'));
+const Onboarding = lazy(() => import('./pages/Onboarding'));
+const Scanner = lazy(() => import('./pages/Scanner'));
+const Dashboard = lazy(() => import('./pages/Dashboard'));
+const HealthTrends = lazy(() => import('./pages/HealthTrends'));
+
+// Loading fallback for lazy routes
+const Loader = () => (
+  <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--background)' }}>
+    <span className="material-symbols-outlined" style={{ fontSize: 32, color: 'var(--primary)', animation: 'spin 1s linear infinite' }}>progress_activity</span>
+    <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
+  </div>
+);
 
 function ProtectedRoute({ children }) {
   const { isAuthenticated, loading } = useAuth();

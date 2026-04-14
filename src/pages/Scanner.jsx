@@ -1,5 +1,6 @@
 import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import imageCompression from 'browser-image-compression';
 import { getMockMenuData } from '../services/ocrService';
 import { dbService } from '../services/dbService';
 import { gradeMenu } from '../services/gradingEngine';
@@ -18,14 +19,30 @@ export default function Scanner() {
   const [uploadedImage, setUploadedImage] = useState(null);
   const fileInputRef = useRef(null);
 
-  const handleFileUpload = (e) => {
+  const handleFileUpload = async (e) => {
     const file = e.target.files[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setUploadedImage(reader.result);
-      };
-      reader.readAsDataURL(file);
+      if (file.size > 5 * 1024 * 1024) {
+        alert('File size exceeds 5MB limit.');
+        return;
+      }
+      
+      try {
+        const options = {
+          maxSizeMB: 1,
+          maxWidthOrHeight: 1200,
+          useWebWorker: true,
+        };
+        const compressedFile = await imageCompression(file, options);
+        
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setUploadedImage(reader.result);
+        };
+        reader.readAsDataURL(compressedFile);
+      } catch (error) {
+        console.error('Image compression failed:', error);
+      }
     }
   };
 
@@ -152,12 +169,16 @@ export default function Scanner() {
         display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1.25rem'
       }}>
         {/* Status chip */}
-        <div style={{
-          display: 'flex', alignItems: 'center', gap: 8,
-          background: 'rgba(255,255,255,0.08)', backdropFilter: 'blur(16px)',
-          border: '1px solid rgba(255,255,255,0.1)', borderRadius: 999, padding: '0.5rem 1.25rem'
-        }}>
-          <span className="material-symbols-outlined" style={{ color: 'var(--primary-fixed)', fontSize: 16 }}>auto_awesome</span>
+        <div 
+          aria-live="polite"
+          role="status"
+          style={{
+            display: 'flex', alignItems: 'center', gap: 8,
+            background: 'rgba(255,255,255,0.08)', backdropFilter: 'blur(16px)',
+            border: '1px solid rgba(255,255,255,0.1)', borderRadius: 999, padding: '0.5rem 1.25rem'
+          }}
+        >
+          <span className="material-symbols-outlined" style={{ color: 'var(--primary-fixed)', fontSize: 16 }} aria-hidden="true">auto_awesome</span>
           <span style={{ fontSize: '0.6875rem', textTransform: 'uppercase', letterSpacing: '0.12em', color: 'var(--primary-fixed)', fontWeight: 700 }}>
             {phase === 'idle' ? 'Align Menu within the Frame' :
              phase === 'scanning' ? 'Detecting text blocks...' :
