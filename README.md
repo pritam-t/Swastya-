@@ -25,7 +25,7 @@
 It ensures every bite is a confident, healthy choice, preventing fatal allergen interactions and dangerous medication conflicts.
 
 <div align="center">
-  <img src="https://placehold.co/1200x600/1E3231/FFFFFF/png?text=Upload+Your+Dashboard+Screenshot+Here" alt="Dashboard Preview" width="100%" />
+  <img src="./screenshots/dashboard.png" alt="Dashboard Preview" width="100%" />
 </div>
 
 ---
@@ -43,10 +43,8 @@ It ensures every bite is a confident, healthy choice, preventing fatal allergen 
 
 | Smart Scanner | Clinical Dashboard | Health Trends |
 | :---: | :---: | :---: |
-| <img src="https://placehold.co/400x500/1a2a2c/FFFFFF/png?text=Upload+Scanner+Here" width="250"/> | <img src="https://placehold.co/400x500/F5F0E8/3a2e1a/png?text=Upload+Dashboard+Here" width="250"/> | <img src="https://placehold.co/400x500/E8F1EF/3a2e1a/png?text=Upload+Trends+Here" width="250"/> |
+| <img src="./screenshots/scanner.png" width="250"/> | <img src="./screenshots/dashboard.png" width="250"/> | <img src="./screenshots/trends.png" width="250"/> |
 | *Gemini Vision bounding boxes* | *Conflict grading (Optimal / Risk)* | *Weekly macro visualization* |
-
-> **Note**: To replace these placeholders, drop your actual screenshots into a `./screenshots/` folder and update the image tags above.
 
 ---
 
