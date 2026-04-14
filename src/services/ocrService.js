@@ -1,55 +1,59 @@
 // ============================================
-Return a JSON array (and ONLY the JSON array, no markdown wrapping) in this format:
-[
-  {
-    "name": "Dish Name",
-    "description": "Brief description if available",
-    "ingredients": ["ingredient1", "ingredient2"],
-    "price": "price if visible or null"
+// OCR SERVICE — Gemini Vision AI Pipeline
+// Extracts menu items, ingredients, and prices from images.
+// ============================================
+
+const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
+
+export async function processMenuImage(base64Image) {
+  // Extract just the base64 payload if it includes data URI schema
+  const base64Data = base64Image.includes(',') ? base64Image.split(',')[1] : base64Image;
+
+  if (!GEMINI_API_KEY || GEMINI_API_KEY.includes('your_api_key')) {
+    console.warn('[Swastya+] Missing VITE_GEMINI_API_KEY in .env. Falling back to mock data.');
+    return getMockMenuData();
   }
-]
-Be thorough — include all dishes you can read. For ingredients, infer likely ingredients from the dish name and description if not explicitly listed.`;
 
   try {
-    const response = await fetch(GEMINI_VISION_URL, {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         contents: [{
           parts: [
-            { text: prompt },
-            { inline_data: { mime_type: 'image/jpeg', data: base64Image } }
+            { text: "Extract the menu items from this image. Return ONLY a valid JSON array. Each object should have: 'name' (string), 'description' (string, or empty if none), 'price' (string, or empty), and 'ingredients' (array of strings, guess based on the dish name if not explicitly stated)." },
+            { inlineData: { mimeType: 'image/jpeg', data: base64Data } }
           ]
         }]
       })
     });
 
-    if (!response.ok) throw new Error(`Gemini API error: ${response.status}`);
+    if (!response.ok) {
+      throw new Error(`Gemini API error: ${response.statusText}`);
+    }
 
-    const data = await response.json();
-    const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-    if (!text) throw new Error('No response from Gemini Vision.');
-
-    // Clean and parse JSON
-    const cleaned = text.replace(/```json|```/g, '').trim();
-    return JSON.parse(cleaned);
-  } catch (err) {
-    console.error('OCR Extraction failed:', err);
-    // Return mock data for development/demo
+    const json = await response.json();
+    let rawText = json.candidates[0].content.parts[0].text;
+    
+    // Clean up markdown serialization
+    rawText = rawText.replace(/```json/g, '').replace(/```/g, '').trim();
+    return JSON.parse(rawText);
+  } catch (error) {
+    console.error('OCR Processing failed:', error);
     return getMockMenuData();
   }
 }
 
 /**
  * Mock menu data for development and demo purposes.
- * Used when Gemini API is unavailable or key isn't set.
+ * Used when Gemini API is unavailable or an error occurs.
  */
 export function getMockMenuData() {
   return [
     {
       name: 'Grilled Salmon',
       description: 'Wild-caught salmon with asparagus and lemon butter sauce',
-      ingredients: ['salmon', 'asparagus', 'butter', 'lemon', 'herbs'],
+      ingredients: ['salmon', 'lemon', 'olive oil'],
       price: '₹420'
     },
     {

@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import imageCompression from 'browser-image-compression';
-import { getMockMenuData } from '../services/ocrService';
+import { processMenuImage } from '../services/ocrService';
 import { dbService } from '../services/dbService';
 import { gradeMenu } from '../services/gradingEngine';
 
@@ -61,9 +61,13 @@ export default function Scanner() {
     setProgress(100);
     setPhase('done');
 
-    // Grade the mock data against user profile
+    // Grade the extracted dish data against user profile
     const profile = dbService.getProfile() || {};
-    const dishes = getMockMenuData();
+    
+    // Fallback if no image uploaded: use a placeholder string or standard menu testing image
+    // For actual use with Gemini, we must pass the base64 string
+    const dishes = await processMenuImage(uploadedImage || 'dummy_base64_for_mock_fallback');
+    
     const graded = gradeMenu(dishes, profile);
     // Store graded results for Dashboard to consume
     localStorage.setItem('swastya_scan_results', JSON.stringify(graded));
